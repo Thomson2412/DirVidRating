@@ -7,6 +7,7 @@
 
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.control.TextField?>
 <GridPane fx:id="container"
           fx:controller="dirvidrating.MainController"
           xmlns:fx="http://javafx.com/fxml"
@@ -19,6 +20,7 @@
     </columnConstraints>
 
     <rowConstraints>
+        <RowConstraints />
         <RowConstraints />
         <RowConstraints />
         <RowConstraints vgrow="ALWAYS"/>
@@ -35,9 +37,18 @@
                 onAction="#playNext"/>
     </HBox>
 
+    <HBox GridPane.columnIndex="0"
+          GridPane.rowIndex="1">
+        <TextField fx:id="gotoIndexTxt"
+                onAction="#gotoIndexBtn"/>
+        <Button fx:id="gotoIndexBtn"
+                text="Go"
+                onAction="#gotoIndexBtn"/>
+    </HBox>
+
     <HBox fx:id="ratingButtons"
           GridPane.columnIndex="0"
-          GridPane.rowIndex="1">
+          GridPane.rowIndex="2">
         <Button fx:id="A"
                 text="A"
                 onAction="#ratingBtn"/>
@@ -56,21 +67,21 @@
     </HBox>
 
     <VBox GridPane.columnIndex="0"
-          GridPane.rowIndex="2"
+          GridPane.rowIndex="3"
           alignment="CENTER">
         <Label  fx:id="realVidLabel"/>
         <MediaView fx:id="mediaViewLeft"/>
     </VBox>
 
     <VBox GridPane.columnIndex="1"
-          GridPane.rowIndex="2"
+          GridPane.rowIndex="3"
           alignment="CENTER">
         <Label  fx:id="currVidLabel"/>
         <MediaView fx:id="mediaViewRight"/>
     </VBox>
 
     <VBox GridPane.columnIndex="0"
-          GridPane.rowIndex="3"
+          GridPane.rowIndex="4"
           spacing="10">
         <Button fx:id="selectDirBtn"
                 text="Select directory"

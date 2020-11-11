@@ -1,11 +1,14 @@
 package dirvidrating;
 
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Control;
 import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.media.Media;
@@ -30,20 +33,26 @@ public class MainController {
     public GridPane container;
 
     @FXML
-    public Label realVidLabel;
-    @FXML
-    public Label currVidLabel;
-    @FXML
-    public HBox ratingButtons;
-    @FXML
-    private MediaView mediaViewLeft;
-    @FXML
-    private MediaView mediaViewRight;
-
-    @FXML
     public Button prevBtn;
     @FXML
     public Button nextBtn;
+
+    @FXML
+    public Button gotoIndexBtn;
+    @FXML
+    public TextField gotoIndexTxt;
+
+    @FXML
+    public HBox ratingButtons;
+
+    @FXML
+    public Label realVidLabel;
+    @FXML
+    private MediaView mediaViewLeft;
+    @FXML
+    public Label currVidLabel;
+    @FXML
+    private MediaView mediaViewRight;
 
     @FXML
     public Button selectDirBtn;
@@ -57,7 +66,19 @@ public class MainController {
     public void initialize() {
         prevBtn.setDisable(true);
         nextBtn.setDisable(true);
+        gotoIndexBtn.setDisable(true);
+        gotoIndexTxt.setDisable(true);
         setDisableRatingButtons(true);
+
+        gotoIndexTxt.textProperty().addListener((observable, oldValue, newValue) -> {
+            if (!newValue.matches("\\d*") || newValue.length() == 0) {
+                gotoIndexTxt.setText(newValue.replaceAll("[^\\d]", ""));
+            }
+            else {
+                int newIndex = Integer.parseInt(newValue);
+                gotoIndexBtn.setDisable(newIndex < 0 || newIndex > dataList.size() - 1);
+            }
+        });
 
         mediaViewLeft.fitWidthProperty().bind(container.widthProperty().divide(2));
         mediaViewLeft.fitHeightProperty().bind(container.heightProperty().divide(2));
@@ -68,30 +89,35 @@ public class MainController {
 
     @FXML
     private void playPrev() {
-        if (indexCount > 0) {
+        if (indexCount > 0)
             indexCount--;
-            nextBtn.setDisable(false);
-        }
-        if (indexCount == 0)
-            prevBtn.setDisable(true);
-
+        setDisabledForIndexCount(indexCount);
+        setIndexText(indexCount);
         playVideo(indexCount);
     }
 
     @FXML
     private void playNext() {
-        if (indexCount < dataList.size()) {
+        if (indexCount < dataList.size())
             indexCount++;
-            prevBtn.setDisable(false);
-        }
-        if (indexCount == dataList.size() - 1)
-            nextBtn.setDisable(true);
-
+        setDisabledForIndexCount(indexCount);
+        setIndexText(indexCount);
         playVideo(indexCount);
     }
 
+    @FXML
+    private void gotoIndexBtn() {
+        String input = gotoIndexTxt.getText();
+        int newIndex = Integer.parseInt(gotoIndexTxt.getText());
+        if(newIndex != indexCount && newIndex < dataList.size()) {
+            indexCount = newIndex;
+            setDisabledForIndexCount(indexCount);
+            playVideo(newIndex);
+        }
+    }
+
     private void playVideo(int index) {
-        if (dataList == null || dataList.size() == 0)
+        if (dataList == null || dataList.size() == 0 || index > dataList.size() - 1)
             return;
 
         mediaViewLeft.setMediaPlayer(null);
@@ -124,8 +150,11 @@ public class MainController {
             dirLabel.setText(dir.toString());
             indexCount = 0;
             playVideo(indexCount);
-            nextBtn.setDisable(false);
+            setIndexText(indexCount);
+            setDisabledForIndexCount(indexCount);
             setDisableRatingButtons(false);
+            gotoIndexBtn.setDisable(false);
+            gotoIndexTxt.setDisable(false);
         }
     }
 
@@ -161,7 +190,7 @@ public class MainController {
                     return result.get(0);
 
             } catch (IOException e) {
-                e.printStackTrace();
+                realVidLabel.setText("Real not found");
             }
         }
 
@@ -199,5 +228,14 @@ public class MainController {
         for (Node btn: ratingButtons.getChildren()) {
             btn.setDisable(disabled);
         }
+    }
+
+    private void setDisabledForIndexCount(int index){
+        prevBtn.setDisable(index == 0);
+        nextBtn.setDisable(index == dataList.size() - 1);
+    }
+
+    private void setIndexText(int index){
+        gotoIndexTxt.setText(Integer.toString(index));
     }
 }
