@@ -1,7 +1,5 @@
 package dirvidrating;
 
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
@@ -107,7 +105,6 @@ public class MainController {
 
     @FXML
     private void gotoIndexBtn() {
-        String input = gotoIndexTxt.getText();
         int newIndex = Integer.parseInt(gotoIndexTxt.getText());
         if(newIndex != indexCount && newIndex < dataList.size()) {
             indexCount = newIndex;
