@@ -7,19 +7,21 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Control;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.media.Media;
+import javafx.scene.media.MediaException;
 import javafx.scene.media.MediaPlayer;
 import javafx.scene.media.MediaView;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -62,6 +64,7 @@ public class MainController {
 
     @FXML
     public void initialize() {
+        container.addEventHandler(KeyEvent.KEY_PRESSED, this::handleShortcut);
         prevBtn.setDisable(true);
         nextBtn.setDisable(true);
         gotoIndexBtn.setDisable(true);
@@ -117,9 +120,6 @@ public class MainController {
         if (dataList == null || dataList.size() == 0 || index > dataList.size() - 1)
             return;
 
-        mediaViewLeft.setMediaPlayer(null);
-        mediaViewRight.setMediaPlayer(null);
-
         Path videoPath = dataList.get(index);
         setAndCreateMediaPlayer(videoPath, mediaViewRight);
         currVidLabel.setText(videoPath.toFile().getName());
@@ -132,8 +132,14 @@ public class MainController {
     }
 
     private void setAndCreateMediaPlayer(Path videoPath, MediaView mediaView) {
+        if(mediaView.getMediaPlayer() != null)
+            mediaView.getMediaPlayer().dispose();
+        mediaView.setMediaPlayer(null);
+
         Media videoMedia = new Media(videoPath.toUri().toString());
         MediaPlayer mediaPlayer = new MediaPlayer(videoMedia);
+
+        mediaPlayer.setOnError(() -> System.out.println(mediaPlayer.getError().toString()));
         mediaPlayer.setAutoPlay(true);
         mediaPlayer.setCycleCount(MediaPlayer.INDEFINITE);
         mediaView.setMediaPlayer(mediaPlayer);
@@ -197,6 +203,10 @@ public class MainController {
     @FXML
     private void ratingBtn(ActionEvent event) {
         String rating = ((Control) event.getSource()).getId();
+        RenameToRating(rating);
+    }
+
+    private void RenameToRating(String rating){
         Path currVideoPath = dataList.get(indexCount);
 
         String currParentPathString = currVideoPath.getParent().toString();
@@ -205,8 +215,11 @@ public class MainController {
         String[] splitFilenameExtension = currFileName.split("\\.");
         if (splitFilenameExtension.length == 2) {
             String[] splitFilename = splitFilenameExtension[0].split("_");
-            if (splitFilename.length > 5)
+            if (splitFilename.length > 5) {
+                if (splitFilename[5].equals( rating))
+                    return;
                 splitFilenameExtension[0] = String.join("_", Arrays.copyOf(splitFilename, splitFilename.length - 1));
+            }
             File renameFile = new File(
                     String.format("%s/%s_%s.%s",
                             currParentPathString,
@@ -214,9 +227,21 @@ public class MainController {
                             rating,
                             splitFilenameExtension[1]));
 
-            if (currVideoPath.toFile().renameTo(renameFile)) {
+            try {
+                if(mediaViewRight.getMediaPlayer() != null)
+                    mediaViewRight.getMediaPlayer().dispose();
+                Files.move(currVideoPath, renameFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
                 currVidLabel.setText(renameFile.getName());
                 dataList.set(indexCount, renameFile.toPath());
+                setAndCreateMediaPlayer(renameFile.toPath(), mediaViewRight);
+                if(mediaViewRight.getMediaPlayer() != null && mediaViewLeft.getMediaPlayer() != null) {
+                    mediaViewRight.getMediaPlayer().setOnPlaying(() -> {
+                        Duration seekTo = mediaViewLeft.getMediaPlayer().getCurrentTime();
+                        mediaViewRight.getMediaPlayer().seek(seekTo);
+                    });
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
             }
         }
     }
@@ -234,5 +259,18 @@ public class MainController {
 
     private void setIndexText(int index){
         gotoIndexTxt.setText(Integer.toString(index));
+    }
+
+    private void handleShortcut(KeyEvent key){
+        if(dataList != null && dataList.size() > 0) {
+            switch (key.getCode()) {
+                case A -> RenameToRating("A");
+                case B -> RenameToRating("B");
+                case C -> RenameToRating("C");
+                case D -> RenameToRating("D");
+                case E -> RenameToRating("E");
+                case NUMPAD0 -> playNext();
+            }
+        }
     }
 }
